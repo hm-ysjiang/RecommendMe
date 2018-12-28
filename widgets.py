@@ -53,6 +53,7 @@ class ResultPanel(wx.Panel):
         self.sizer.Add(wx.StaticText(self, label='', size=(10, 5)))
 
         self.btn = wx.Button(self, label='Check out', size=(180, 20))
+        self.btn.Bind(wx.EVT_BUTTON, self.on_checkout)
         self.sizer.Add(self.btn, flag=wx.ALIGN_CENTER)
 
         # extra space
@@ -65,6 +66,9 @@ class ResultPanel(wx.Panel):
         self.sizer.Add(self.sizer_h2)
 
         self.SetSizer(self.sizer)
+
+    def on_checkout(self, event):
+        print(f'{self.name}: {self.place_id}')
 
 
 class ResultScrollPanel(ScrollPanel):
