@@ -10,13 +10,18 @@ def parse_config():
 
 
 def get_google_api_key():
-    return parse_config()['ak']['v']
+    return parse_config()['ak']['g']
+
+
+def get_ipstack_api_key():
+    return parse_config()['ak']['i']
 
 
 def gen_config():
     config = parse_config()
     config['ak'] = {}
-    config['ak']['v'] = ''
+    config['ak']['g'] = ''
+    config['ak']['i'] = ''
     with open('akc.ini', 'w') as cfg:
         config.write(cfg)
 
