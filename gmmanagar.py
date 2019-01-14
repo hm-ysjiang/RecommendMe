@@ -54,7 +54,8 @@ def get_distance(p1, p2=None):
 def relocate_center_latlng(lat, lng):
     global center, center_id
     center_id = ''
-    center = lat, lng
+    center = int(lat), int(lng)
+    print(center)
 
 
 def relocate_center_place_id(place_id):

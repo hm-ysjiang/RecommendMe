@@ -8,11 +8,10 @@ key = kcparser.get_ipstack_api_key()
 
 
 def get_ip():
-    r = requests.get('https://api.myip.com/')
+    r = requests.get('https://myip.com.tw/')
     soup = Bs(r.text, 'html.parser')
-    m = re.search(r'^{"ip":"(\d+\.\d+\.\d+\.\d+)",.+$', soup.get_text())
-    if m:
-        return m.group(1)
+    ip = soup.find('font').get_text()
+    return ip
 
 
 def get_location(ip):

@@ -1,6 +1,6 @@
 import gmmanagar
 import wx
-from enums import *
+from enums import SearchTypes
 import frame
 
 

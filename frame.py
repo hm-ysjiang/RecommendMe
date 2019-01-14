@@ -193,11 +193,12 @@ class Frame(wx.Frame):
                         d['distance'] = gmmanagar.get_distance((destination['lat'], destination['lng']))
                         results.append(d)
                         del d
-                    while 'next_page_token' in j_places.keys():
-                        kwargs = {'page_token': j_places['next_page_token']}
-                        print(f'Using args: {kwargs}')
+
+                    if 'next_page_token' in j_places.keys():
+                        time.sleep(5)
                         try:
-                            time.sleep(5)
+                            kwargs = {'page_token': j_places['next_page_token']}
+                            print(f'Using args: {kwargs}')
                             j_places = gmmanagar.search(**kwargs)
                             for result in j_places['results']:
                                 d = dict()
@@ -211,16 +212,17 @@ class Frame(wx.Frame):
                                 d['distance'] = gmmanagar.get_distance((destination['lat'], destination['lng']))
                                 results.append(d)
                                 del d
-                        except googlemaps.exceptions.ApiError as e:
-                            if e.status == 'INVALID_REQUEST':
-                                break
                         except googlemaps.exceptions.Timeout:
-                            print('Timeout on searching!')
-                            break
+                            print('Timeout on searching! Please try again later')
+                        except googlemaps.exceptions.ApiError as e:
+                            print(f'API Error, status: {e.status}. Please try again later')
 
                     print('End searching, sorting results')
                     if self.checkbox_both.GetValue():
-                        pass
+                        results = sorted(results,
+                                         key=lambda e: (e['rating'] if e['rating'] else 0) * 0.8 +
+                                         int(self.radius_bar.GetValue()) - e['distance'] * 1000,
+                                         reverse=True)
                     elif self.checkbox_dist.GetValue():
                         results = sorted(results, key=lambda e: int(self.radius_bar.GetValue()) - e['distance'] * 1000,
                                          reverse=True)
@@ -229,7 +231,9 @@ class Frame(wx.Frame):
                     self.results_list.set_results(results)
                     self.results_list.update_results()
                 except googlemaps.exceptions.Timeout:
-                    print('Timeout on searching!')
+                    print('Timeout on searching! Please try again later')
+                except googlemaps.exceptions.ApiError as e:
+                    print(f'API Error, status: {e.status}. Please try again later')
 
     def on_macro_selected(self, event):
         for btn in self.macro_list.btn_list:
@@ -289,12 +293,8 @@ class Frame(wx.Frame):
 
     def relocate_map(self, event):
         print(self.browser.GetCurrentURL())
-        m = re.search(r'^https://www.google.com/maps/place/'
-                      r'(\?q=place_id:(.+))?(.+/@([-\d\.]+,[-\d\.]+),\d+z.*)?$',
+        m = re.search(r'^https://www.google.com/maps/place/.*\@([-\d\.]+,[-\d\.]+),\d+z.*$',
                       self.browser.GetCurrentURL())
         if m:
-            if m.group(4) is None:
-                gmmanagar.relocate_center_place_id(m.group(2))
-            else:
-                gmmanagar.relocate_center_latlng(*m.group(4).split(','))
+            gmmanagar.relocate_center_latlng(*m.group(1).split(','))
             self.update_browser()
