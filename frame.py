@@ -1,3 +1,4 @@
+from enums import *
 import geolocation
 import gmmanagar
 import googlemaps.exceptions
@@ -12,8 +13,8 @@ import wx.lib.scrolledpanel
 
 class Frame(wx.Frame):
 
-    def __init__(self, enum):
-        super().__init__(parent=None, title='Recommend Me!', size=(1000, 500))
+    def __init__(self):
+        super().__init__(parent=None, title='Recommend Me!', size=(1000, 520))
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer_v1 = wx.BoxSizer(wx.VERTICAL)
         self.sizer_h1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -35,6 +36,9 @@ class Frame(wx.Frame):
         self.sizer_v1.Add(self.sizer_h2)
 
         self.SetSizer(self.sizer)
+
+        self.status = self.CreateStatusBar()
+        self.status.SetStatusText(StatusText.WAITING.value)
 
         # The Search Bar
         self.search_bar = wx.TextCtrl(self, value='Search Here...', size=(180, 25))
@@ -89,7 +93,7 @@ class Frame(wx.Frame):
         self.sizer_h4.Add(self.max_cost)
 
         # Macros
-        self.macro_list = widgets.MacroScrollPanel(self, (150, 410), enum)
+        self.macro_list = widgets.MacroScrollPanel(self, (150, 410), SearchTypes)
         self.sizer_v2R.Add(self.macro_list)
 
         # The Result List
@@ -114,7 +118,7 @@ class Frame(wx.Frame):
         self.where_pnl_sizer = wx.BoxSizer(wx.VERTICAL)
         self.where_pnl.SetBackgroundColour((171, 171, 171))
         self.where_pnl.SetSizer(self.where_pnl_sizer)
-        self.where_pnl_sizer.Add(wx.StaticText(self.where_pnl, label=' ', size=(85, 8)))
+        self.where_pnl_sizer.Add(wx.StaticText(self.where_pnl, label=' ', size=(85, 6)))
         self.where_pnl_sizer.Add(wx.StaticText(self.where_pnl, label='   Where am I ?', size=(85, 22)))
         self.sizer_h5.Add(self.where_pnl)
 
@@ -126,7 +130,7 @@ class Frame(wx.Frame):
         self.or_pnl_sizer = wx.BoxSizer(wx.VERTICAL)
         self.or_pnl.SetBackgroundColour((171, 171, 171))
         self.or_pnl.SetSizer(self.or_pnl_sizer)
-        self.or_pnl_sizer.Add(wx.StaticText(self.or_pnl, label=' ', size=(30, 8)))
+        self.or_pnl_sizer.Add(wx.StaticText(self.or_pnl, label=' ', size=(30, 6)))
         self.or_pnl_sizer.Add(wx.StaticText(self.or_pnl, label='   or', size=(30, 22)))
         self.sizer_h5.Add(self.or_pnl)
 
@@ -140,7 +144,7 @@ class Frame(wx.Frame):
         self.or_pnl_2_sizer = wx.BoxSizer(wx.VERTICAL)
         self.or_pnl_2.SetBackgroundColour((171, 171, 171))
         self.or_pnl_2.SetSizer(self.or_pnl_2_sizer)
-        self.or_pnl_2_sizer.Add(wx.StaticText(self.or_pnl_2, label=' ', size=(30, 8)))
+        self.or_pnl_2_sizer.Add(wx.StaticText(self.or_pnl_2, label=' ', size=(30, 6)))
         self.or_pnl_2_sizer.Add(wx.StaticText(self.or_pnl_2, label='   or', size=(30, 22)))
         self.sizer_h5.Add(self.or_pnl_2)
 
@@ -151,6 +155,7 @@ class Frame(wx.Frame):
         self.Show()
 
     def on_search(self, event):
+        self.status.SetStatusText(StatusText.SEARCHING.value + ' (Page 1)')
         keyword = self.search_bar.GetValue().strip()
         if keyword and keyword != 'Search Here...':
             print('Action performed')
@@ -195,6 +200,7 @@ class Frame(wx.Frame):
                         del d
 
                     if 'next_page_token' in j_places.keys():
+                        self.status.SetStatusText(StatusText.SEARCHING.value + ' (Page 2)')
                         time.sleep(5)
                         try:
                             kwargs = {'page_token': j_places['next_page_token']}
@@ -218,6 +224,7 @@ class Frame(wx.Frame):
                             print(f'API Error, status: {e.status}. Please try again later')
 
                     print('End searching, sorting results')
+                    self.status.SetStatusText(StatusText.SORTING.value)
                     if self.checkbox_both.GetValue():
                         results = sorted(results,
                                          key=lambda e: (e['rating'] if e['rating'] else 0) * 0.8 +
@@ -230,10 +237,13 @@ class Frame(wx.Frame):
                         results = sorted(results, key=lambda e: e['rating'] if e['rating'] else 0, reverse=True)
                     self.results_list.set_results(results)
                     self.results_list.update_results()
+                    self.status.SetStatusText(StatusText.WAITING.value)
                 except googlemaps.exceptions.Timeout:
                     print('Timeout on searching! Please try again later')
+                    self.status.SetStatusText(StatusText.WAITING.value)
                 except googlemaps.exceptions.ApiError as e:
                     print(f'API Error, status: {e.status}. Please try again later')
+                    self.status.SetStatusText(StatusText.WAITING.value)
 
     def on_macro_selected(self, event):
         for btn in self.macro_list.btn_list:
@@ -249,6 +259,7 @@ class Frame(wx.Frame):
                 self.search_bar.SetValue(keyword)
 
     def on_checkbox_clicked(self, event):
+        self.status.SetStatusText(StatusText.SORTING.value)
         for box in self.checkboxes:
             box.SetValue(box is event.GetEventObject())
         if self.checkbox_both.GetValue():
@@ -261,6 +272,7 @@ class Frame(wx.Frame):
             self.results_list.results = sorted(self.results_list.results,
                                                key=lambda e: e['rating'] if e['rating'] else 0, reverse=True)
         self.results_list.update_results()
+        self.status.SetStatusText(StatusText.WAITING.value)
 
     def on_checkout(self, event):
         for result in self.results_list.pnl_list:
@@ -278,23 +290,30 @@ class Frame(wx.Frame):
             self.browser.LoadURL(f'https://www.google.com/maps/place/?q={gmmanagar.center[0]},{gmmanagar.center[1]}')
 
     def relocate_ip(self, event):
-        gmmanagar.relocate_center_latlng(*geolocation.get_location(geolocation.get_ip()))
+        ip = geolocation.get_ip()
+        self.status.SetStatusText(StatusText.RELOCATE_IP.value + ip)
+        gmmanagar.relocate_center_latlng(*geolocation.get_location(ip))
         self.update_browser()
+        self.status.SetStatusText(StatusText.WAITING.value)
 
     def relocate_search(self, event):
-        print(self.relocate_search_bar.GetValue())
+        query = self.relocate_search_bar.GetValue().split(' ')
+        self.status.SetStatusText(StatusText.RELOCATE_SEARCH.value + f"[{' '.join(query)}]")
         if self.relocate_search_bar.GetValue():
             try:
-                gmmanagar.relocate_center_query(self.relocate_search_bar.GetValue().split(' '))
+                gmmanagar.relocate_center_query(query)
                 print(gmmanagar.center)
                 self.update_browser()
             except googlemaps.exceptions.Timeout:
                 print('Timeout on relocating')
+        self.status.SetStatusText(StatusText.WAITING.value)
 
     def relocate_map(self, event):
+        self.status.SetStatusText(StatusText.RELOCATE_MAP.value)
         print(self.browser.GetCurrentURL())
         m = re.search(r'^https://www.google.com/maps/place/.*\@([-\d\.]+,[-\d\.]+),\d+z.*$',
                       self.browser.GetCurrentURL())
         if m:
             gmmanagar.relocate_center_latlng(*m.group(1).split(','))
             self.update_browser()
+        self.status.SetStatusText(StatusText.WAITING.value)

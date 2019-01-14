@@ -1,6 +1,5 @@
 import gmmanagar
 import wx
-from enums import SearchTypes
 import frame
 
 
@@ -8,7 +7,7 @@ def run():
     gmmanagar.init()
 
     app = wx.App()
-    frame.Frame(SearchTypes)
+    frame.Frame()
     app.MainLoop()
 
 

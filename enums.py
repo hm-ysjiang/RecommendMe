@@ -1,6 +1,15 @@
 from enum import Enum
 
 
+class StatusText(Enum):
+    SEARCHING = 'Searching... This may take a while...'
+    WAITING = 'Waiting for user'
+    SORTING = 'Sorting results'
+    RELOCATE_IP = 'Relocating... (Using IP) IP: '
+    RELOCATE_SEARCH = 'Relocating... (Using query search) Query: '
+    RELOCATE_MAP = 'Relocating... (Using map)'
+
+
 class SearchTypes(Enum):
     RESTAURANT = 'restaurant'
     CAFE = 'cafe'
