@@ -88,8 +88,7 @@ class ResultScrollPanel(ScrollPanel):
             self.pnl_list.append(pnl)
             self.sizer.Add(pnl)
             self.sizer.AddSpacer(3)
-        if self.results:
-            self.sizer.Add(wx.StaticText(self, label='------End Of Data------', size=(218, 25), style=wx.ALIGN_CENTER))
+        self.sizer.Add(wx.StaticText(self, label='------End Of Data------', size=(218, 25), style=wx.ALIGN_CENTER))
         self.SetupScrolling(False, True, rate_x=10)
 
     def clear(self):

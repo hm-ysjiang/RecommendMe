@@ -200,11 +200,11 @@ class Frame(wx.Frame):
                         del d
 
                     if 'next_page_token' in j_places.keys():
-                        self.status.SetStatusText(StatusText.SEARCHING.value + ' (Page 2)')
-                        time.sleep(5)
                         try:
                             kwargs = {'page_token': j_places['next_page_token']}
                             print(f'Using args: {kwargs}')
+                            self.status.SetStatusText(StatusText.SEARCHING.value + ' (Page 2)')
+                            time.sleep(5)
                             j_places = gmmanagar.search(**kwargs)
                             for result in j_places['results']:
                                 d = dict()
@@ -227,14 +227,14 @@ class Frame(wx.Frame):
                     self.status.SetStatusText(StatusText.SORTING.value)
                     if self.checkbox_both.GetValue():
                         results = sorted(results,
-                                         key=lambda e: (e['rating'] if e['rating'] else 0) * 0.8 +
-                                         int(self.radius_bar.GetValue()) - e['distance'] * 1000,
+                                         key=lambda r: (r['rating'] if r['rating'] else 0) * 0.8 +
+                                         int(self.radius_bar.GetValue()) - r['distance'] * 1000,
                                          reverse=True)
                     elif self.checkbox_dist.GetValue():
-                        results = sorted(results, key=lambda e: int(self.radius_bar.GetValue()) - e['distance'] * 1000,
+                        results = sorted(results, key=lambda r: int(self.radius_bar.GetValue()) - r['distance'] * 1000,
                                          reverse=True)
                     elif self.checkbox_rank.GetValue():
-                        results = sorted(results, key=lambda e: e['rating'] if e['rating'] else 0, reverse=True)
+                        results = sorted(results, key=lambda r: r['rating'] if r['rating'] else 0, reverse=True)
                     self.results_list.set_results(results)
                     self.results_list.update_results()
                     self.status.SetStatusText(StatusText.WAITING.value)
