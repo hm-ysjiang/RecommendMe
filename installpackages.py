@@ -1,6 +1,6 @@
 import os
 
-packages = ['googlemaps', 'haversine', 'requests', 'wxPython==4.0.3']
+packages = ['bs4', 'googlemaps', 'haversine', 'requests', 'wxPython==4.0.3']
 
 if __name__ == '__main__':
     for package in packages:

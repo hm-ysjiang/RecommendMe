@@ -311,9 +311,13 @@ class Frame(wx.Frame):
                 gmmanagar.relocate_center_query(query)
                 print(gmmanagar.center)
                 self.update_browser()
+                self.status.SetStatusText(StatusText.WAITING.value)
             except googlemaps.exceptions.Timeout:
                 print('Timeout on relocating')
-        self.status.SetStatusText(StatusText.WAITING.value)
+                self.status.SetStatusText(StatusText.TIMEOUT.value)
+            except googlemaps.exceptions.ApiError as e:
+                print(f'API Error, status: {e.status}. Please try again later')
+                self.status.SetStatusText(StatusText.API_ERROR.value + e.status)
 
     def relocate_map(self, event):
         self.status.SetStatusText(StatusText.RELOCATE_MAP.value)
@@ -323,6 +327,12 @@ class Frame(wx.Frame):
         if m:
             gmmanagar.relocate_center_latlng(*m.group(1).split(','))
             self.update_browser()
+        else:
+            m = re.search(r'^https://www.google.com/maps/place/\?q=([-\d\.]+,[-\d\.]+)$',
+                          self.browser.GetCurrentURL())
+            if m:
+                gmmanagar.relocate_center_latlng(*m.group(1).split(','))
+                self.update_browser()
         self.status.SetStatusText(StatusText.WAITING.value)
 
     def mix(self, e):
