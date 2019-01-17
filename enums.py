@@ -8,6 +8,8 @@ class StatusText(Enum):
     RELOCATE_IP = 'Relocating... (Using IP) IP: '
     RELOCATE_SEARCH = 'Relocating... (Using query search) Query: '
     RELOCATE_MAP = 'Relocating... (Using map)'
+    TIMEOUT = 'Time out! Please try again later.'
+    API_ERROR = 'Error! '
 
 
 class SearchTypes(Enum):

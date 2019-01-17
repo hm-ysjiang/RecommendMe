@@ -66,7 +66,7 @@ class Frame(wx.Frame):
         self.filter_label_pnl.SetBackgroundColour((171, 171, 171))
         self.filter_label_pnl.SetSizer(self.filter_label_pnl_sizer)
         self.filter_label_pnl_sizer.Add(wx.StaticText(self.filter_label_pnl, label=' ', size=(60, 4)))
-        self.filter_label_pnl_sizer.Add(wx.StaticText(self.filter_label_pnl, label='Filter by:', size=(60, 25),
+        self.filter_label_pnl_sizer.Add(wx.StaticText(self.filter_label_pnl, label='Sort by:', size=(60, 25),
                                                       style=wx.ALIGN_CENTER))
         self.checkbox_both = widgets.CheckBox(self, label='Both', size=(50, 25))
         self.checkbox_both.SetValue(True)
@@ -167,10 +167,14 @@ class Frame(wx.Frame):
             self.max_cost.SetValue(max_cost)
 
             type_ = None
-            m = re.search(r'^.*(<.*>)$', keyword)
+            m = re.search(r'^(<.*>)?[^<>]*(<.*>)?$', keyword)
             if m:
-                type_ = m.group(1)[1:len(m.group(1)) - 1]
-                keyword = keyword.replace(m.group(1), '')
+                if m.group(1):
+                    type_ = m.group(1)[1:len(m.group(1)) - 1]
+                    keyword = keyword.replace(m.group(1), '')
+                elif m.group(2):
+                    type_ = m.group(2)[1:len(m.group(2)) - 1]
+                    keyword = keyword.replace(m.group(2), '')
 
             if radius:
                 kwargs = {'radius': int(radius)}
@@ -220,16 +224,19 @@ class Frame(wx.Frame):
                                 del d
                         except googlemaps.exceptions.Timeout:
                             print('Timeout on searching! Please try again later')
+                            self.status.SetStatusText(StatusText.TIMEOUT.value)
                         except googlemaps.exceptions.ApiError as e:
                             print(f'API Error, status: {e.status}. Please try again later')
+                            self.status.SetStatusText(StatusText.API_ERROR.value + e.status)
 
                     print('End searching, sorting results')
                     self.status.SetStatusText(StatusText.SORTING.value)
                     if self.checkbox_both.GetValue():
-                        results = sorted(results,
-                                         key=lambda r: (r['rating'] if r['rating'] else 0) * 0.8 +
-                                         int(self.radius_bar.GetValue()) - r['distance'] * 1000,
-                                         reverse=True)
+                        # results = sorted(results,
+                        #                  key=lambda r: (r['rating'] if r['rating'] else 0) * 0.8 +
+                        #                                int(self.radius_bar.GetValue()) - r['distance'] * 1000,
+                        #                  reverse=True)
+                        results = sorted(results, key=lambda r: self.mix(r), reverse=True)
                     elif self.checkbox_dist.GetValue():
                         results = sorted(results, key=lambda r: int(self.radius_bar.GetValue()) - r['distance'] * 1000,
                                          reverse=True)
@@ -240,10 +247,10 @@ class Frame(wx.Frame):
                     self.status.SetStatusText(StatusText.WAITING.value)
                 except googlemaps.exceptions.Timeout:
                     print('Timeout on searching! Please try again later')
-                    self.status.SetStatusText(StatusText.WAITING.value)
+                    self.status.SetStatusText(StatusText.TIMEOUT.value)
                 except googlemaps.exceptions.ApiError as e:
                     print(f'API Error, status: {e.status}. Please try again later')
-                    self.status.SetStatusText(StatusText.WAITING.value)
+                    self.status.SetStatusText(StatusText.API_ERROR.value + e.status)
 
     def on_macro_selected(self, event):
         for btn in self.macro_list.btn_list:
@@ -263,7 +270,7 @@ class Frame(wx.Frame):
         for box in self.checkboxes:
             box.SetValue(box is event.GetEventObject())
         if self.checkbox_both.GetValue():
-            pass
+            self.results_list.results = sorted(self.results_list.results, key=lambda e: self.mix(e), reverse=True)
         elif self.checkbox_dist.GetValue():
             self.results_list.results = sorted(self.results_list.results,
                                                key=lambda e: int(self.radius_bar.GetValue()) - e['distance'] * 1000,
@@ -317,3 +324,11 @@ class Frame(wx.Frame):
             gmmanagar.relocate_center_latlng(*m.group(1).split(','))
             self.update_browser()
         self.status.SetStatusText(StatusText.WAITING.value)
+
+    def mix(self, e):
+        radius = int(self.radius_bar.GetValue())
+        distance_diff = radius - e['distance'] * 1000
+        rating = e['rating'] if e['rating'] else 0
+        return distance_diff / radius * 0.25 + rating / 5 * 0.75
+
+
